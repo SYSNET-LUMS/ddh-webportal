@@ -4,11 +4,17 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import HomeAssignments from "./pages/HomeAssignments";
 import ClassActivity from "./pages/ClassActivity";
+import ActivityPage from "./pages/ActivityPage";
+import LiveActivityPage from "./pages/LiveActivityPage";
+import BigScreenPage from "./pages/BigScreenPage";
 
 function App() {
   return (
     <BrowserRouter basename="/ddh-portal/">
       <Routes>
+        {/* Unprotected BigScreen Projector Route */}
+        <Route path="/big-screen" element={<BigScreenPage />} />
+
         {/* If Not Authenticated, Show Login. Otherwise, Redirect to Dashboard */}
         <Route path="/" element={
           <>
@@ -35,6 +41,16 @@ function App() {
         <Route path="/class-activity" element={
           <Show when='signed-in' fallback={<Navigate to="/" replace />}>
             <ClassActivity />
+          </Show>
+        } />
+        <Route path="/activity" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <ActivityPage />
+          </Show>
+        } />
+        <Route path="/live-activity" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <LiveActivityPage />
           </Show>
         } />
       </Routes>

@@ -1,0 +1,453 @@
+/* ─── ActivityPage ───────────────────────────────────────────── */
+
+.ap-container {
+    min-height: 100vh;
+    width: 100vw;
+    background-color: #0a1d37;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    overflow: hidden;
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+
+.ap-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 2rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    flex-shrink: 0;
+}
+
+.ap-back-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    color: white;
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.87rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ap-back-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
+.ap-title {
+    color: white;
+    font-size: 1.45rem;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0.01em;
+}
+
+/* ─── Phase badge (top-right of header) ──────────────────────── */
+
+.ap-phase-badge {
+    flex-shrink: 0;
+    background: rgba(22, 164, 158, 0.18);
+    border: 1px solid rgba(22, 164, 158, 0.38);
+    color: #4dd9d3;
+    border-radius: 20px;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.ap-phase-of {
+    font-weight: 400;
+    opacity: 0.75;
+}
+
+/* ─── Phase Stepper ──────────────────────────────────────────── */
+
+.ap-stepper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem 2rem 0.6rem;
+    gap: 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ap-stepper-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+    max-width: 140px;
+    gap: 0.35rem;
+}
+
+.ap-step-dot {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.ap-step-dot--current {
+    background: rgba(22, 164, 158, 0.25);
+    border-color: #16a49e;
+    color: #4dd9d3;
+    box-shadow: 0 0 0 4px rgba(22, 164, 158, 0.15), 0 0 14px rgba(22, 164, 158, 0.4);
+    animation: ap-pulse-step 2.2s ease-in-out infinite;
+}
+
+.ap-step-dot--done {
+    background: #16a49e;
+    border-color: #16a49e;
+    color: white;
+    box-shadow: 0 2px 10px rgba(22, 164, 158, 0.45);
+}
+
+@keyframes ap-pulse-step {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(22, 164, 158, 0.15), 0 0 10px rgba(22, 164, 158, 0.35); }
+    50%       { box-shadow: 0 0 0 6px rgba(22, 164, 158, 0.22), 0 0 20px rgba(22, 164, 158, 0.55); }
+}
+
+.ap-step-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Connecting line between steps */
+.ap-step-line {
+    position: absolute;
+    top: 16px;
+    left: calc(50% + 18px);
+    right: calc(-50% + 18px);
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+    transition: background 0.4s ease;
+}
+
+.ap-step-line--done {
+    background: #16a49e;
+}
+
+/* ─── Body layout ────────────────────────────────────────────── */
+
+.ap-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* ─── Iframe section ─────────────────────────────────────────── */
+
+.ap-iframe-wrapper {
+    position: relative;
+    background: #060f1e;
+    border-right: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+}
+
+.ap-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    animation: ap-fade-in 0.3s ease;
+}
+
+@keyframes ap-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.ap-no-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 1rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* ─── Response panel ─────────────────────────────────────────── */
+
+.ap-response-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 1.6rem 1.6rem 1.8rem;
+    overflow-y: auto;
+    background: #0d2040;
+    gap: 1rem;
+}
+
+.ap-response-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    flex-shrink: 0;
+}
+
+.ap-response-icon {
+    font-size: 1.3rem;
+    line-height: 1.4;
+}
+
+.ap-response-title {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.15rem;
+}
+
+.ap-response-subtitle {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* ─── Form ───────────────────────────────────────────────────── */
+
+.ap-response-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    flex: 1;
+    animation: ap-fade-in 0.25s ease;
+}
+
+.ap-textarea {
+    width: 100%;
+    min-height: 200px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    font-family: inherit;
+    line-height: 1.65;
+    padding: 0.9rem 1rem;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.ap-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.ap-textarea:focus {
+    border-color: rgba(22, 164, 158, 0.65);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 3px rgba(22, 164, 158, 0.1);
+}
+
+.ap-textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ─── Feedback messages ──────────────────────────────────────── */
+
+.ap-feedback {
+    margin: 0;
+    font-size: 0.87rem;
+    font-weight: 500;
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    animation: ap-fade-in 0.2s ease;
+}
+
+.ap-feedback--success {
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.22);
+}
+
+.ap-feedback--error {
+    background: rgba(239, 68, 68, 0.11);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+}
+
+/* ─── Submit button ──────────────────────────────────────────── */
+
+.ap-submit-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #16a49e 0%, #0d8a85 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.72rem 1.4rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(22, 164, 158, 0.32);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.ap-submit-btn:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 22px rgba(22, 164, 158, 0.48);
+}
+
+.ap-submit-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.ap-submit-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ─── Spinner ────────────────────────────────────────────────── */
+
+.ap-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: ap-spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+@keyframes ap-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── Completion Screen ──────────────────────────────────────── */
+
+.ap-completion {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 3rem 2rem;
+    animation: ap-fade-in 0.5s ease;
+    text-align: center;
+}
+
+.ap-completion-icon {
+    font-size: 4rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 24px rgba(255, 215, 0, 0.4));
+    animation: ap-bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ap-bounce-in {
+    from { transform: scale(0.4); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+.ap-completion-title {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.ap-completion-sub {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1rem;
+    margin: 0;
+    max-width: 380px;
+}
+
+.ap-completion-sub strong {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.ap-back-to-class-btn {
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, #16a49e 0%, #0d8a85 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.78rem 1.8rem;
+    font-size: 1rem;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(22, 164, 158, 0.4);
+}
+
+.ap-back-to-class-btn:hover {
+    opacity: 0.88;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(22, 164, 158, 0.55);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .ap-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: 50vh 1fr;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    .ap-iframe-wrapper {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .ap-response-panel {
+        overflow-y: visible;
+    }
+
+    .ap-stepper {
+        padding: 0.8rem 1rem 0.6rem;
+        justify-content: flex-start;
+    }
+}

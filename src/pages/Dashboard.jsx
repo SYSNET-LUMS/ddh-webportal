@@ -3,6 +3,10 @@ import { useUser } from "@clerk/react";
 import DashboardCard from "../components/DashboardCard";
 import CornerDesign from "../components/dashboard/DashboardHeader";
 import '../App.css';
+import gradeIcon from '../assets/dashboard/grade-icon.svg';
+import classroomIcon from '../assets/dashboard/classroom-icon.svg';
+import homeIcon from '../assets/dashboard/home-icon.svg';
+import helpIcon from '../assets/dashboard/help-icon.svg';
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -25,26 +29,26 @@ export default function Dashboard() {
                 <DashboardCard
                     title="Grade Book"
                     colorClass="navy-card"
-                    icon="src/assets/dashboard/grade-icon.svg"
+                    icon={gradeIcon}
                 />
             </div>
             <div className="dashboard-grid-3">
                 <DashboardCard
                     title="Class-Room Assignment"
                     colorClass="navy-card"
-                    icon="src/assets/dashboard/classroom-icon.svg"
+                    icon={classroomIcon}
                     to="/class-activity"
                 />
                 <DashboardCard
                     title="Home Assignments"
                     colorClass="gold-card"
-                    icon="src/assets/dashboard/home-icon.svg"
+                    icon={homeIcon}
                     to="/home-assignments"
                 />
                 <DashboardCard
                     title="I Need Help"
                     colorClass="green-card"
-                    icon="src/assets/dashboard/help-icon.svg"
+                    icon={helpIcon}
                 />
             </div>
         </div>

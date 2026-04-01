@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SignIn, SignUp } from "@clerk/react";
 import '../App.css';
+import logo from '../assets/ddh-logo-accronim.svg';
 
 function Login() {
     const [isLogin, setIsLogin] = useState(true);
@@ -34,7 +35,7 @@ function Login() {
             <div className="login-card">
                 <div className="logo-container">
                     <img
-                        src="src/assets/ddh-logo-accronim.svg"
+                        src={logo}
                         alt="DDH Logo"
                         style={{ width: '300px', height: 'auto' }}
                     />

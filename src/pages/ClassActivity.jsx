@@ -1,5 +1,5 @@
 // src/pages/ClassActivity.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/ClassActivity.css';
 
@@ -7,48 +7,46 @@ import liveClassIcon   from '../assets/class-activity/live-class-icon.svg';
 import discussionIcon  from '../assets/class-activity/discussion-icon.svg';
 import interactiveIcon from '../assets/class-activity/interactive-icon.svg';
 
-/* ─── Static data (dateObj drives visibility logic) ───────────── */
+/* ─── Activity type → icon & color ────────────────────────────── */
 
-const SESSIONS = [
-    {
-        date: 'April 3',
-        dateObj: new Date(2026, 3, 3),   // month is 0-indexed: 3 = April
-        activities: [
-            { id: 'lc-apr3',  label: 'Live Class',            icon: liveClassIcon,   color: 'teal' },
-            { id: 'da1-apr3', label: 'Discussion Activity 1',  icon: discussionIcon,  color: 'gold' },
-            { id: 'da2-apr3', label: 'Discussion Activity 2',  icon: discussionIcon,  color: 'gold' },
-            { id: 'ia1-apr3', label: 'Interactive Activity 1', icon: interactiveIcon, color: 'gold' },
-            { id: 'ia2-apr3', label: 'Interactive Activity 2', icon: interactiveIcon, color: 'gold' },
-        ],
-    },
-    {
-        date: 'April 5',
-        dateObj: new Date(2026, 3, 5),
-        activities: [
-            { id: 'lc-apr5',  label: 'Live Class',            icon: liveClassIcon,   color: 'teal' },
-            { id: 'da1-apr5', label: 'Discussion Activity 1',  icon: discussionIcon,  color: 'gold' },
-            { id: 'ia1-apr5', label: 'Interactive Activity 1', icon: interactiveIcon, color: 'gold' },
-        ],
-    },
-    {
-        date: 'April 8',
-        dateObj: new Date(2026, 3, 8),
-        activities: [
-            { id: 'lc-apr8',  label: 'Live Class',            icon: liveClassIcon,   color: 'teal' },
-            { id: 'da1-apr8', label: 'Discussion Activity 1',  icon: discussionIcon,  color: 'gold' },
-            { id: 'da2-apr8', label: 'Discussion Activity 2',  icon: discussionIcon,  color: 'gold' },
-            { id: 'ia1-apr8', label: 'Interactive Activity 1', icon: interactiveIcon, color: 'gold' },
-            { id: 'ia2-apr8', label: 'Interactive Activity 2', icon: interactiveIcon, color: 'gold' },
-            { id: 'ia3-apr8', label: 'Interactive Activity 3', icon: interactiveIcon, color: 'gold' },
-        ],
-    },
-];
+const TYPE_MAP = {
+    'discussion':    { icon: discussionIcon,  color: 'gold' },
+    'interactive':   { icon: interactiveIcon, color: 'gold' },
+};
+
+/** Fallback for unknown types */
+function resolveType(type = '') {
+    return TYPE_MAP[type.toLowerCase()] ?? { icon: interactiveIcon, color: 'gold' };
+}
+
+/* ─── API ──────────────────────────────────────────────────────── */
+
+const BACKEND = import.meta.env.VITE_SERVER_HTTP_ADDRESS
+    ? `http://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
+    : '';
+
+async function fetchClassList() {
+    const url = `${BACKEND}/api/minio/file?bucket=class-data&key=class-activities/class-list.json`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Server returned ${res.status}`);
+    return res.json(); // expected shape: { sessions: [ { date, activities: [...] } ] }
+}
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
 
 /** Strip time from a Date so comparisons are day-accurate */
 function toDay(d) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+/**
+ * Parse a human-readable date string like "April 5" into a Date object.
+ * Assumes current year if the result makes sense; adjusts to next year if already past by > 180 days.
+ */
+function parseDateLabel(label) {
+    const d = new Date(`${label} ${new Date().getFullYear()}`);
+    if (isNaN(d)) return new Date(0); // fallback for unparseable dates
+    return d;
 }
 
 /**
@@ -59,20 +57,51 @@ function toDay(d) {
  */
 function categorizeSessions(sessions) {
     const today = toDay(new Date());
-
     let nextFound = false;
+
     return sessions.map(s => {
         const sessionDay = toDay(s.dateObj);
         if (sessionDay < today) {
             return { ...s, status: 'past' };
         }
-        // >= today
         if (!nextFound) {
             nextFound = true;
             return { ...s, status: 'next' };
         }
         return { ...s, status: 'future' };
     });
+}
+
+/**
+ * Transform the raw API response into the shape the component expects.
+ * Adds a unique id, resolved icon/color, and a dateObj to each item.
+ */
+function transformApiData(data) {
+    const rawSessions = Array.isArray(data) ? data : data?.sessions ?? [];
+
+    return rawSessions.map(session => ({
+        date: session.date,
+        dateObj: parseDateLabel(session.date),
+        activities: (session.activities ?? []).map((act, idx) => {
+            const { icon, color } = resolveType(act.type);
+            return {
+                id:          act.id ?? `${session.date}-${idx}`,
+                label:       act.name,
+                icon,
+                color,
+                // contentUrls is an ordered array of URLs, one per phase
+                contentUrls:  Array.isArray(act.contentUrls)
+                                  ? act.contentUrls
+                                  : (act.contentUrl ?? act.redirectUrl)
+                                      ? [act.contentUrl ?? act.redirectUrl]
+                                      : [],
+                totalPhases: act.totalPhases ?? act.contentUrls?.length ?? 1,
+                isGroupActivity: act.isGroupActivity ?? act.isGroup ?? false,
+                sessionDate: session.date.toLowerCase().replace(/\s+/g, '-'),
+                activityStatus: act.status ?? 'live',
+            };
+        }),
+    }));
 }
 
 /* ─── Icons ───────────────────────────────────────────────────── */
@@ -99,14 +128,34 @@ function LockIcon() {
 
 /* ─── DateSection ─────────────────────────────────────────────── */
 
-function DateSection({ session }) {
+function DateSection({ session, navigate }) {
     const { date, activities, status } = session;
     const isPast   = status === 'past';
     const isNext   = status === 'next';
     const isFuture = status === 'future';
 
-    // Past: collapsed by default. Next: expanded. Future: never opened (locked).
     const [open, setOpen] = useState(isNext);
+
+    const handleActivityClick = (act) => {
+        if (act.activityStatus === 'locked') {
+            alert('This activity is not open yet.');
+            return;
+        }
+        
+        if (act.contentUrls?.length) {
+            navigate('/activity', {
+                state: {
+                    activityId:      act.id,
+                    activityLabel:   act.label,
+                    contentUrls:     act.contentUrls,
+                    totalPhases:     act.totalPhases,
+                    isGroupActivity: act.isGroupActivity,
+                    sessionDate:     act.sessionDate,
+                    activityStatus:  act.activityStatus,
+                },
+            });
+        }
+    };
 
     if (isFuture) {
         return (
@@ -142,17 +191,32 @@ function DateSection({ session }) {
 
             {open && (
                 <div className={`ca-activity-grid ${isPast ? 'ca-activity-grid--past' : ''}`}>
+                    {isNext && (
+                        <div 
+                            className="ca-card teal ca-card--clickable" 
+                            style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                            onClick={() => navigate('/live-activity')}
+                        >
+                            <img src={liveClassIcon} alt="Live Route" className="ca-card-icon" style={{ margin: 0 }} />
+                            <span className="ca-card-label" style={{ fontWeight: 'bold' }}>Join Live Route Automatically</span>
+                        </div>
+                    )}
                     {activities.map(act => (
                         <div
                             key={act.id}
-                            className={`ca-card ${act.color} ${isPast ? 'ca-card--past' : ''}`}
-                            role="button"
-                            tabIndex={0}
+                            className={`ca-card ${act.color} ${isPast ? 'ca-card--past' : ''} ${act.contentUrls?.length ? 'ca-card--clickable' : ''}`}
+                            role={act.contentUrls?.length ? 'button' : undefined}
+                            tabIndex={act.contentUrls?.length ? 0 : undefined}
                             id={`card-${act.id}`}
-                            onKeyDown={e => e.key === 'Enter' && console.log('Selected:', act.label)}
+                            onClick={() => handleActivityClick(act)}
+                            onKeyDown={e => e.key === 'Enter' && handleActivityClick(act)}
                         >
                             <img src={act.icon} alt={act.label} className="ca-card-icon" />
-                            <span className="ca-card-label">{act.label}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="ca-card-label">{act.label}</span>
+                                {act.activityStatus === 'completed' && <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(76, 175, 80, 0.2)', color: '#4CAF50', borderRadius: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>✓ Completed</span>}
+                                {act.activityStatus === 'locked' && <span style={{ fontSize: '0.65rem', padding: '2px 6px', background: 'rgba(255, 255, 255, 0.15)', color: '#bbb', borderRadius: '4px', fontWeight: 'bold', textTransform: 'uppercase' }}>🔒 Locked</span>}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -164,8 +228,34 @@ function DateSection({ session }) {
 /* ─── Page ────────────────────────────────────────────────────── */
 
 export default function ClassActivity() {
-    const navigate  = useNavigate();
-    const sessions  = categorizeSessions(SESSIONS);
+    const navigate = useNavigate();
+
+    const [sessions, setSessions]   = useState([]);
+    const [loading,  setLoading]    = useState(true);
+    const [error,    setError]      = useState(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+
+        fetchClassList()
+            .then(data => {
+                if (cancelled) return;
+                const transformed = transformApiData(data);
+                setSessions(categorizeSessions(transformed));
+            })
+            .catch(err => {
+                if (cancelled) return;
+                console.error('[ClassActivity] Failed to load class list:', err);
+                setError(err.message ?? 'Failed to load activities');
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+
+        return () => { cancelled = true; };
+    }, []);
 
     return (
         <div className="class-activity-container">
@@ -182,10 +272,24 @@ export default function ClassActivity() {
                 <h1 className="ca-page-title">Class Activities</h1>
             </div>
 
-            {/* Scrollable session list */}
+            {/* Body */}
             <div className="ca-body">
-                {sessions.map(session => (
-                    <DateSection key={session.date} session={session} />
+                {loading && (
+                    <p className="ca-status-msg">Loading activities…</p>
+                )}
+
+                {!loading && error && (
+                    <p className="ca-status-msg ca-status-msg--error">
+                        ⚠ {error}
+                    </p>
+                )}
+
+                {!loading && !error && sessions.length === 0 && (
+                    <p className="ca-status-msg">No activities found.</p>
+                )}
+
+                {!loading && !error && sessions.map(session => (
+                    <DateSection key={session.date} session={session} navigate={navigate} />
                 ))}
             </div>
 

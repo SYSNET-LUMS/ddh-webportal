@@ -1,5 +1,7 @@
 import React from 'react';
 import { useWindowSize } from '../../utils/useWindowSize';
+import bgLeft from '../../assets/dashboard-bg-left.svg';
+import bgRight from '../../assets/dashboard-bg-right.svg';
 
 const CornerDesign = ({ minDistance = 50, originalSize = 300 }) => {
     const { width, height } = useWindowSize();
@@ -29,7 +31,7 @@ const CornerDesign = ({ minDistance = 50, originalSize = 300 }) => {
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
             {/* Top Left Triangle */}
             <img
-                src="src/assets/dashboard-bg-left.svg"
+                src={bgLeft}
                 style={{
                     position: 'absolute',
                     top: 0,
@@ -41,7 +43,7 @@ const CornerDesign = ({ minDistance = 50, originalSize = 300 }) => {
 
             {/* Bottom Right Triangle */}
             <img
-                src="src/assets/dashboard-bg-right.svg"
+                src={bgRight}
                 style={{
                     position: 'absolute',
                     top: 0,
