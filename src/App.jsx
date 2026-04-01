@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Show } from "@clerk/react";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import HomeAssignments from "./pages/HomeAssignments";
+import ClassActivity from "./pages/ClassActivity";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <BrowserRouter basename="/ddh-portal/">
+      <Routes>
+        {/* If Not Authenticated, Show Login. Otherwise, Redirect to Dashboard */}
+        <Route path="/" element={
+          <>
+            <Show when='signed-out'>
+              <Login />
+            </Show>
+            <Show when='signed-in'>
+              <Navigate to="/dashboard" replace />
+            </Show>
+          </>
+        } />
+
+        {/* Protect Dashboard: Only Show when Authenticated */}
+        <Route path="/dashboard" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <Dashboard />
+          </Show>
+        } />
+        <Route path="/home-assignments" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <HomeAssignments />
+          </Show>
+        } />
+        <Route path="/class-activity" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <ClassActivity />
+          </Show>
+        } />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

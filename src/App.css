@@ -1,42 +1,245 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* Full page background using your pattern */
+:root {
+  /* Font Color Palette */
+  --color-text-gold: #a56c1f;
+  /* Main headings and titles */
+  --color-text-navy: #071d38;
+  /* Subtitles and body text */
+  --color-text-white: #f8f7f6;
+  /* Captions and disabled text */
+  --color-text-green: #1b3829;
+  /* Highlighted text (matches your design) */
+  --color-text-truk: #16a49e;
+  /* Text on dark backgrounds */
+  --color-text-offwhite: #d6cbc1;
+  /* Error messages */
+}
+
+.login-page {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: url('./assets/zoom-background-pattern.svg');
+  /* Use your uploaded pattern here */
+  background-size: cover;
+  background-position: center;
+}
+
+/* Centered login card */
+.login-card {
+  background-color: #f8f9fa;
+  /* Off-white background as seen in design */
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 450px;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.logo-container img {
+  width: 180px;
+  margin-bottom: 0.5rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.subtitle {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  font-weight: 500;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.subtitle span {
+  font-weight: bold;
 }
 
-.card {
-  padding: 2em;
+/* Input styling matching the design */
+.input-field {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: white;
+  font-size: 1rem;
 }
 
-.read-the-docs {
-  color: #888;
+/* Button styling using the gold/tan color from the design */
+.login-btn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #d1a067;
+  /* Tan color from your image */
+  color: black;
+  border: 1px solid #333;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: opacity 0.2s;
+}
+
+.login-btn:hover {
+  opacity: 0.9;
+}
+
+/* src/App.css */
+
+.clerk-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Optional: Match Clerk's button to your gold/tan color */
+.cl-formButtonPrimary {
+  background-color: var(--color-text-gold) !important;
+  color: black !important;
+  border: 1px solid #333 !important;
+}
+
+/* Optional: Match the input fields to your 10px rounded border */
+.cl-formFieldInput {
+  border-radius: 10px !important;
+  border: 1px solid #333 !important;
+}
+
+.subtitle {
+  /* This ensures the 'Digital Health' part defaults to navy */
+  color: var(--color-text-navy);
+  font-weight: 500;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Customizing Clerk internal text to be Navy */
+.cl-headerTitle,
+.cl-headerSubtitle,
+.cl-socialButtonsBlockButtonText,
+.cl-formFieldLabel {
+  color: var(--color-text-navy) !important;
+}
+
+.cl-footerActionText,
+.cl-footerActionLink {
+  color: var(--color-text-navy) !important;
+}
+
+/* Dashbaord */
+
+/* src/App.css */
+:root {
+  --dash-navy: #0a1d37;
+  --dash-gold: #d1a067;
+  --dash-green: #1b3022;
+}
+
+/* src/App.css */
+
+.dashboard-wrapper {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 0;
+
+  /* Apply the pattern image */
+  background-color: var(--color-text-white);
+  background-size: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* Keeps background still while scrolling */
+}
+
+.dashboard-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 260px);
+  /* Fixed width to match your design */
+  gap: 25px;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.dashboard-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 400px);
+  /* Fixed width to match your design */
+  gap: 25px;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* Ensure the welcome text is Navy and readable over the pattern */
+.welcome-header {
+  color: var(--color-text-navy);
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+.student-banner {
+  grid-column: 1 / 2;
+  background-color: var(--dash-gold);
+  color: white;
+  padding: 2rem;
+  border-radius: 20px;
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+/* Card Specific Styles */
+.dash-card {
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.dash-card:hover {
+  transform: translateY(-5px);
+}
+
+.navy-card {
+  background-color: var(--dash-navy);
+}
+
+.gold-card {
+  background-color: #b07020;
+}
+
+/* Darker gold for contrast */
+.green-card {
+  background-color: var(--dash-green);
+}
+
+.card-top {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.arrow-circle {
+  background: rgba(255, 255, 255, 0.2);
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-content {
+  text-align: center;
+}
+
+.card-icon {
+  width: 80px;
+  margin-bottom: 1rem;
 }
