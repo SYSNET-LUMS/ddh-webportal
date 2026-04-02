@@ -5,8 +5,10 @@ import { useUser } from '@clerk/react';
 import '../styles/ActivityPage.css';
 
 const BACKEND = import.meta.env.VITE_SERVER_HTTP_ADDRESS
-    ? `http://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
+    ? `https://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
     : '';
+
+const MAX_CHARS = 1000;
 
 async function submitPhaseResponse({ activityId, activityLabel, phase, totalPhases, response, groupNumber, userId, sessionDate }) {
     const res = await fetch(`${BACKEND}/api/activity/response`, {
@@ -64,7 +66,7 @@ function CheckIcon() {
 
 /* ─── Phase Progress Stepper ──────────────────────────────────── */
 
-function PhaseStepper({ current, total, completedPhases }) {
+function PhaseStepper({ current, total, completedPhases, phaseName, phaseNames }) {
     return (
         <div className="ap-stepper" aria-label="Activity progress">
             {Array.from({ length: total }, (_, i) => {
@@ -83,7 +85,7 @@ function PhaseStepper({ current, total, completedPhases }) {
                         >
                             {isDone ? <CheckIcon /> : phase}
                         </div>
-                        <span className="ap-step-label">Phase {phase}</span>
+                        <span className="ap-step-label">{phaseNames[i] || `${phaseName} ${phase}`}</span>
                         {phase < total && <div className={`ap-step-line ${isDone ? 'ap-step-line--done' : ''}`} />}
                     </div>
                 );
@@ -119,7 +121,7 @@ export default function ActivityPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useUser();
-    const userId = user?.id;
+    const userId = user?.username;
     const groupNumber = user?.publicMetadata?.groupNumber || 'NO-GROUP';
 
     const {
@@ -131,6 +133,8 @@ export default function ActivityPage() {
         sessionDate = 'unknown-date',
         activityStatus = 'live',
         isLiveMode = false,
+        phaseName = 'Phase',     // Custom prefix (e.g., "Question", "Step")
+        phaseNames = [],         // Custom labels for each phase (e.g., ["Intro", "Core", "Conclusion"])
     } = location.state ?? {};
 
     // Normalise: ensure contentUrls has exactly totalPhases entries (pad with null if needed)
@@ -359,9 +363,8 @@ export default function ActivityPage() {
                     </div>
                 )}
 
-                {/* Phase counter (compact, top-right) */}
                 <div className="ap-phase-badge">
-                    Phase {currentPhase} <span className="ap-phase-of">of {totalPhases}</span>
+                    {phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase}`} <span className="ap-phase-of">of {totalPhases}</span>
                 </div>
             </div>
 
@@ -371,6 +374,8 @@ export default function ActivityPage() {
                     current={currentPhase}
                     total={totalPhases}
                     completedPhases={completedPhases}
+                    phaseName={phaseName}
+                    phaseNames={phaseNames}
                 />
             )}
 
@@ -384,14 +389,14 @@ export default function ActivityPage() {
                             key={currentPhase}           /* remount on phase change */
                             id={`ap-content-iframe-phase-${currentPhase}`}
                             src={currentUrl}
-                            title={`${activityLabel} – Phase ${currentPhase}`}
+                            title={`${activityLabel} – ${phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase}`}`}
                             className="ap-iframe"
                             allowFullScreen
                             sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                         />
                     ) : (
                         <div className="ap-no-content">
-                            <span>No content provided for Phase {currentPhase}.</span>
+                            <span>No content provided for {phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase}`}.</span>
                         </div>
                     )}
                 </div>
@@ -404,7 +409,9 @@ export default function ActivityPage() {
                             <h2 className="ap-response-title">
                                 {isGroupActivity ? 'Group Response' : 'Your Response'}
                             </h2>
-                            <p className="ap-response-subtitle">Phase {currentPhase} of {totalPhases}</p>
+                            <p className="ap-response-subtitle">
+                                {phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase} of ${totalPhases}`}
+                            </p>
                         </div>
                     </div>
 
@@ -417,7 +424,9 @@ export default function ActivityPage() {
                             key={currentPhase}           /* fresh textarea per phase */
                             id={`ap-response-textarea-phase-${currentPhase}`}
                             className="ap-textarea"
-                            placeholder={isGroupActivity ? `Write your group's response for Phase ${currentPhase}…` : `Write your response for Phase ${currentPhase}…`}
+                            placeholder={isGroupActivity
+                                ? `Write your group's response for ${phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase}`}…`
+                                : `Write your response for ${phaseNames[currentPhase - 1] || `${phaseName} ${currentPhase}`}…`}
                             value={response}
                             onChange={e => {
                                 setResponse(e.target.value);
@@ -425,7 +434,19 @@ export default function ActivityPage() {
                             }}
                             rows={6}
                             disabled={status === 'sending' || activityStatus === 'completed'}
+                            maxLength={MAX_CHARS}
                         />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginTop: '0.4rem', marginBottom: '0.6rem' }}>
+                            <span>
+                                {response.length >= MAX_CHARS && (
+                                    <span style={{ color: '#ff6b6b' }}>Maximum character limit reached.</span>
+                                )}
+                            </span>
+                            <span style={{ color: response.length >= MAX_CHARS ? '#ff6b6b' : 'rgba(255, 255, 255, 0.5)' }}>
+                                {response.length} / {MAX_CHARS}
+                            </span>
+                        </div>
 
                         {status === 'success' && (
                             <p className="ap-feedback ap-feedback--success">✓ {statusMsg}</p>

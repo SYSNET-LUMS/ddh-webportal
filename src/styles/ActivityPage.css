@@ -177,6 +177,8 @@
     background: #060f1e;
     border-right: 1px solid rgba(255, 255, 255, 0.07);
     overflow: hidden;
+    /* Reserve space for scrollbar to prevent layout shifts */
+    scrollbar-gutter: stable;
 }
 
 .ap-iframe {
@@ -185,6 +187,8 @@
     border: none;
     display: block;
     animation: ap-fade-in 0.3s ease;
+    /* Force vertical scrollbar to be always visible */
+    overflow-y: scroll;
 }
 
 @keyframes ap-fade-in {

@@ -21,7 +21,7 @@ export default function Dashboard() {
                 {/* Top Banner with Student Info */}
                 <div className="student-banner">
                     <p><strong>Name:</strong> {user?.fullName}</p>
-                    <p><strong>Roll Number:</strong> {user?.id}</p>
+                    <p><strong>Username:</strong> {user?.username}</p>
                     <p><strong>DeviceID:</strong> {user?.id}</p>
                 </div>
 
@@ -30,6 +30,7 @@ export default function Dashboard() {
                     title="Grade Book"
                     colorClass="navy-card"
                     icon={gradeIcon}
+                    onClick={() => alert("This will be released to participants soon and you will be notified when it is live")}
                 />
             </div>
             <div className="dashboard-grid-3">
@@ -44,6 +45,7 @@ export default function Dashboard() {
                     colorClass="gold-card"
                     icon={homeIcon}
                     to="/home-assignments"
+                    onClick={() => alert("This will be released to participants soon and you will be notified when it is live")}
                 />
                 <DashboardCard
                     title="I Need Help"

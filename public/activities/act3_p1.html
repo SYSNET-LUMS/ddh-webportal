@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phase 1 — Intermittent Monitoring</title>
+  <style>
+/* ─── ClassActivity Page ─────────────────────────────────────── */
+
+.class-activity-container {
+    min-height: 100vh;
+    width: 100vw;
+    background-color: #0a1d37;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+}
+
+/* ─── Header bar ─────────────────────────────────────────────── */
+
+.ca-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.6rem 2.5rem 1rem;
+}
+
+.ca-back-btn {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    color: white;
+    border-radius: 8px;
+    padding: 0.45rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.ca-back-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.ca-page-title {
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 500;
+    margin: 0;
+    letter-spacing: 0.01em;
+}
+
+/* ─── Scrollable body ────────────────────────────────────────── */
+
+.ca-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 2.5rem 3rem;
+}
+
+/* ─── Date Section ───────────────────────────────────────────── */
+
+.ca-date-section {
+    margin-bottom: 1.5rem;
+}
+
+/* ─── Date Toggle Button ─────────────────────────────────────── */
+
+.ca-date-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    width: 100%;
+    text-align: left;
+}
+
+.ca-date-toggle:hover .ca-date-label {
+    opacity: 0.8;
+}
+
+.ca-toggle-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.ca-toggle-icon svg {
+    transition: transform 0.3s ease;
+}
+
+.ca-toggle-icon.open svg {
+    transform: rotate(0deg);
+}
+
+.ca-toggle-icon.closed svg {
+    transform: rotate(-90deg);
+}
+
+.ca-date-label {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 500;
+    transition: opacity 0.2s;
+}
+
+/* ─── Activity Grid ──────────────────────────────────────────── */
+
+.ca-activity-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding-left: 2.2rem;  /* indent under the chevron */
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Activity Card ──────────────────────────────────────────── */
+
+.ca-card {
+    width: 165px;
+    height: 165px;
+    border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.ca-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ca-card.teal {
+    background-color: #16a49e;
+}
+
+.ca-card.gold {
+    background-color: #c98e3f;
+}
+
+.ca-card-icon {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+.ca-card-label {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* ─── Status: Past session ───────────────────────────────────── */
+
+.ca-date-section--past .ca-date-label {
+    opacity: 0.6;
+}
+
+.ca-date-section--past .ca-toggle-icon {
+    border-color: rgba(255, 255, 255, 0.3);
+    opacity: 0.6;
+}
+
+/* Past cards are de-saturated / dimmed */
+.ca-activity-grid--past .ca-card {
+    opacity: 0.6;
+    filter: saturate(0.55);
+}
+
+.ca-activity-grid--past .ca-card:hover {
+    opacity: 0.8;
+    filter: saturate(0.75);
+}
+
+/* ─── Badges ─────────────────────────────────────────────────── */
+
+.ca-past-badge,
+.ca-next-badge,
+.ca-locked-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    margin-left: 0.75rem;
+    vertical-align: middle;
+}
+
+.ca-past-badge {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.ca-next-badge {
+    background: #16a49e;
+    color: white;
+    box-shadow: 0 0 10px rgba(22, 164, 158, 0.55);
+    animation: pulse-badge 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 8px rgba(22, 164, 158, 0.5); }
+    50%       { box-shadow: 0 0 18px rgba(22, 164, 158, 0.9); }
+}
+
+/* ─── Status: Locked / future session ───────────────────────── */
+
+.ca-date-toggle--locked {
+    cursor: default;
+    pointer-events: none;
+}
+
+.ca-toggle-icon--locked {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ca-date-label--locked {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.ca-locked-badge {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.65rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+    .ca-panel {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 24px;
+      padding: 1.4rem 1.5rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .ca-section-title {
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.9rem;
+    }
+    .ca-text, .ca-list li, .ca-table td, .ca-table th {
+      color: rgba(255,255,255,0.92);
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+    .ca-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.05);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .ca-table th {
+      text-align: left;
+      background: rgba(22,164,158,0.22);
+      padding: 0.9rem 1rem;
+      font-weight: 600;
+    }
+    .ca-table td {
+      padding: 0.9rem 1rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .ca-list {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+    .ca-list li {
+      margin-bottom: 0.55rem;
+    }
+    .ca-body {
+      max-width: 920px;
+    }
+  </style>
+</head>
+<body>
+  <div class="class-activity-container">
+    <div class="ca-header">
+      <h1 class="ca-page-title">Phase 1 — Intermittent Monitoring</h1>
+    </div>
+
+    <div class="ca-body">
+      <div class="ca-panel">
+        <h2 class="ca-section-title">Case</h2>
+        <p class="ca-text">
+          An insulin-treated diabetes patient is being followed using routine glucose checks.
+          The patient reports some variability but no clear pattern from day to day.
+          Review the case using only the spot-check data below.
+        </p>
+      </div>
+
+      <div class="ca-panel">
+        <h2 class="ca-section-title">Data</h2>
+        <table class="ca-table" aria-label="Intermittent glucose data">
+          <thead>
+            <tr>
+              <th>Reading</th>
+              <th>Time</th>
+              <th>Value (mg/dL)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Morning check</td>
+              <td>08:00</td>
+              <td>84</td>
+            </tr>
+            <tr>
+              <td>Midday check</td>
+              <td>12:00</td>
+              <td>165</td>
+            </tr>
+            <tr>
+              <td>Evening check</td>
+              <td>18:00</td>
+              <td>96</td>
+            </tr>
+            <tr>
+              <td>Bedtime check</td>
+              <td>22:00</td>
+              <td>108</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ca-panel">
+        <h2 class="ca-section-title">Questions</h2>
+        <ul class="ca-list">
+          <li>What can you tell from these isolated readings?</li>
+          <li>What kinds of patterns might still be hidden?</li>
+          <li>How much of the full daily glucose pattern is visible from these values alone?</li>
+          <li>What additional data would help you understand the pattern better?</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

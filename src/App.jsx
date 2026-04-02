@@ -7,6 +7,7 @@ import ClassActivity from "./pages/ClassActivity";
 import ActivityPage from "./pages/ActivityPage";
 import LiveActivityPage from "./pages/LiveActivityPage";
 import BigScreenPage from "./pages/BigScreenPage";
+import AdminPage from "./pages/AdminPage";
 
 function App() {
   return (
@@ -51,6 +52,11 @@ function App() {
         <Route path="/live-activity" element={
           <Show when='signed-in' fallback={<Navigate to="/" replace />}>
             <LiveActivityPage />
+          </Show>
+        } />
+        <Route path="/admin-control" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <AdminPage />
           </Show>
         } />
       </Routes>

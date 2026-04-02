@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 
 const BACKEND = import.meta.env.VITE_SERVER_HTTP_ADDRESS
-    ? `http://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
+    ? `https://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
     : '';
 
 async function fetchClassList() {
@@ -16,29 +15,48 @@ export default function BigScreenPage() {
     const [statusText, setStatusText] = useState('Syncing with class...');
     const [liveActivity, setLiveActivity] = useState(null);
     const [sessionDate, setSessionDate] = useState('');
-    
-    const [currentPhase, setCurrentPhase] = useState(1);
+    const [userGroups, setUserGroups] = useState({});
     const [responses, setResponses] = useState([]);
 
-    // 1. Poll for the currently live activity
+    useEffect(() => {
+        const fetchGroups = async () => {
+            try {
+                const res = await fetch(`${BACKEND}/api/users/groups`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setUserGroups(data.groups || {});
+                }
+            } catch (e) {
+                console.error('[BigScreenPage] Error fetching user groups:', e);
+            }
+        };
+
+        fetchGroups();
+    }, []);
+
     useEffect(() => {
         let isCancelled = false;
         let timeoutId;
 
         const checkLiveActivity = async () => {
             if (isCancelled) return;
+
             try {
                 const data = await fetchClassList();
                 const sessions = data.sessions || [];
                 let activeActivity = null;
                 let activeSessionDate = '';
-                
+
                 for (const session of sessions) {
                     const acts = session.activities || [];
-                    const liveAct = acts.find(a => a.status === 'live' || a.activityStatus === 'live');
+                    const liveAct = acts.find(
+                        (a) => a.status === 'live' || a.activityStatus === 'live'
+                    );
+
                     if (liveAct) {
                         activeActivity = liveAct;
-                        activeSessionDate = session.date?.toLowerCase().replace(/\s+/g, '-') || 'unknown-date';
+                        activeSessionDate =
+                            session.date?.toLowerCase().replace(/\s+/g, '-') || 'unknown-date';
                         break;
                     }
                 }
@@ -63,10 +81,13 @@ export default function BigScreenPage() {
         };
 
         checkLiveActivity();
-        return () => { isCancelled = true; clearTimeout(timeoutId); };
+
+        return () => {
+            isCancelled = true;
+            clearTimeout(timeoutId);
+        };
     }, []);
 
-    // 2. Poll for responses of the live activity
     useEffect(() => {
         if (!liveActivity) return;
 
@@ -75,9 +96,19 @@ export default function BigScreenPage() {
 
         const fetchResponses = async () => {
             if (isCancelled) return;
+
             try {
-                const url = `${BACKEND}/api/activity/responses/all?activityId=${encodeURIComponent(liveActivity.id)}&phase=${currentPhase}&sessionDate=${encodeURIComponent(sessionDate)}`;
+                const isGroupActivity =
+                    liveActivity.isGroupActivity || liveActivity.isGroup || false;
+
+                const url = `${BACKEND}/api/activity/responses/all?activityId=${encodeURIComponent(
+                    liveActivity.id
+                )}&sessionDate=${encodeURIComponent(
+                    sessionDate
+                )}&isGroupActivity=${isGroupActivity}`;
+
                 const res = await fetch(url);
+
                 if (res.ok) {
                     const data = await res.json();
                     setResponses(data.responses || []);
@@ -87,74 +118,243 @@ export default function BigScreenPage() {
             }
 
             if (!isCancelled) {
-                timeoutId = setTimeout(fetchResponses, 5000); // 5 sec rapid poll for projector
+                timeoutId = setTimeout(fetchResponses, 5000);
             }
         };
 
         fetchResponses();
-        return () => { isCancelled = true; clearTimeout(timeoutId); };
-    }, [liveActivity, currentPhase, sessionDate]);
 
+        return () => {
+            isCancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [liveActivity, sessionDate]);
 
     if (!liveActivity) {
-         return (
-             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#121212' }}>
-                 <h1 style={{ color: '#fff', fontSize: '3rem', fontFamily: 'system-ui' }}>{statusText}</h1>
-             </div>
-         );
+        return (
+            <div
+                style={{
+                    position: 'fixed',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#121212',
+                    margin: 0,
+                    padding: 0,
+                    overflow: 'hidden',
+                }}
+            >
+                <h1
+                    style={{
+                        color: '#fff',
+                        fontSize: '3rem',
+                        fontFamily: 'system-ui',
+                        margin: 0,
+                    }}
+                >
+                    {statusText}
+                </h1>
+            </div>
+        );
     }
 
     const totalPhases = liveActivity.totalPhases || liveActivity.contentUrls?.length || 1;
 
     return (
-        <div style={{ minHeight: '100vh', background: '#121212', color: '#fff', fontFamily: 'system-ui', display: 'flex', flexDirection: 'column' }}>
-            <header style={{ padding: '2rem 4rem', background: '#1a1a1a', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div
+            style={{
+                position: 'fixed',
+                inset: 0,
+                background: '#121212',
+                color: '#fff',
+                fontFamily: 'system-ui',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                margin: 0,
+                padding: 0,
+                boxSizing: 'border-box',
+            }}
+        >
+            <header
+                style={{
+                    padding: '2rem 3rem',
+                    background: '#1a1a1a',
+                    borderBottom: '1px solid #333',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    flexShrink: 0,
+                }}
+            >
                 <div>
-                    <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 'bold' }}>{liveActivity.name || liveActivity.label}</h1>
-                    <p style={{ margin: '0.5rem 0 0 0', color: '#888', fontSize: '1.5rem' }}>Live Submissions</p>
+                    <h1
+                        style={{
+                            margin: 0,
+                            fontSize: '2.5rem',
+                            fontWeight: 'bold',
+                        }}
+                    >
+                        {liveActivity.name || liveActivity.label}
+                    </h1>
+                    <p
+                        style={{
+                            margin: '0.5rem 0 0 0',
+                            color: '#888',
+                            fontSize: '1.5rem',
+                        }}
+                    >
+                        Live Submissions
+                    </p>
                 </div>
-                
-                {/* Phase navigation for multi-phase activities */}
-                {totalPhases > 1 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', background: '#222', padding: '1rem 2rem', borderRadius: '12px' }}>
-                        <button 
-                            onClick={() => setCurrentPhase(p => Math.max(1, p - 1))}
-                            disabled={currentPhase === 1}
-                            style={{ background: 'transparent', border: 'none', color: currentPhase === 1 ? '#444' : '#fff', fontSize: '2rem', cursor: currentPhase === 1 ? 'default' : 'pointer' }}
-                        >
-                            ←
-                        </button>
-                        <span style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>Phase {currentPhase} of {totalPhases}</span>
-                        <button 
-                            onClick={() => setCurrentPhase(p => Math.min(totalPhases, p + 1))}
-                            disabled={currentPhase === totalPhases}
-                            style={{ background: 'transparent', border: 'none', color: currentPhase === totalPhases ? '#444' : '#fff', fontSize: '2rem', cursor: currentPhase === totalPhases ? 'default' : 'pointer' }}
-                        >
-                            →
-                        </button>
-                    </div>
-                )}
             </header>
 
-            <main style={{ flex: 1, padding: '4rem', overflowY: 'auto' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem' }}>
+            <main
+                style={{
+                    flex: 1,
+                    width: '100%',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    padding: '2rem',
+                    boxSizing: 'border-box',
+                }}
+            >
+                <div
+                    style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                        gap: '2rem',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        alignItems: 'start',
+                    }}
+                >
                     {responses.length === 0 ? (
-                        <h2 style={{ color: '#555', gridColumn: '1 / -1', textAlign: 'center', marginTop: '4rem', fontSize: '2rem' }}>
+                        <h2
+                            style={{
+                                color: '#555',
+                                gridColumn: '1 / -1',
+                                textAlign: 'center',
+                                marginTop: '4rem',
+                                fontSize: '2rem',
+                            }}
+                        >
                             Waiting for responses...
                         </h2>
                     ) : (
-                        responses.map((resp, idx) => (
-                            <div key={idx} style={{ background: '#222', padding: '2rem', borderRadius: '16px', borderLeft: '6px solid #6366f1', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                                    <span style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#a855f7', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: 'bold', fontSize: '1.2rem' }}>
-                                        {resp.groupNumber && resp.groupNumber !== 'NO-GROUP' ? `Group ${resp.groupNumber}` : `User ${resp.userId?.slice(-4)}`}
-                                    </span>
+                        responses.map((resp, idx) => {
+                            const isGroup = liveActivity.isGroupActivity || liveActivity.isGroup;
+                            const label = isGroup
+                                ? `Group ${resp.groupNumber !== 'NO-GROUP'
+                                    ? resp.groupNumber
+                                    : 'Unknown'
+                                }`
+                                : `User ${resp.userId}`;
+
+                            const members =
+                                isGroup &&
+                                    resp.groupNumber !== 'NO-GROUP' &&
+                                    userGroups[resp.groupNumber]
+                                    ? userGroups[resp.groupNumber].join(', ')
+                                    : '';
+
+                            return (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        background: '#222',
+                                        padding: '2rem',
+                                        borderRadius: '16px',
+                                        borderLeft: '6px solid #6366f1',
+                                        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                                        minWidth: 0,
+                                        width: '100%',
+                                        boxSizing: 'border-box',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.5rem',
+                                            marginBottom: '1.5rem',
+                                        }}
+                                    >
+                                        <span
+                                            style={{
+                                                alignSelf: 'flex-start',
+                                                background: 'rgba(99, 102, 241, 0.15)',
+                                                color: '#a855f7',
+                                                padding: '0.5rem 1rem',
+                                                borderRadius: '8px',
+                                                fontWeight: 'bold',
+                                                fontSize: '1.2rem',
+                                                maxWidth: '100%',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        >
+                                            {label}
+                                        </span>
+
+                                        {members && (
+                                            <span
+                                                style={{
+                                                    color: '#888',
+                                                    fontSize: '1rem',
+                                                    wordBreak: 'break-word',
+                                                }}
+                                            >
+                                                {members}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '1.5rem',
+                                        }}
+                                    >
+                                        {(resp.phases || []).map((phaseText, pIdx) => {
+                                            if (!phaseText) return null;
+
+                                            return (
+                                                <div key={pIdx}>
+                                                    {totalPhases > 1 && (
+                                                        <h4
+                                                            style={{
+                                                                margin: '0 0 0.5rem 0',
+                                                                color: '#555',
+                                                                fontSize: '1.1rem',
+                                                            }}
+                                                        >
+                                                            Phase {pIdx + 1}
+                                                        </h4>
+                                                    )}
+
+                                                    <p
+                                                        style={{
+                                                            fontSize: '1.2rem',
+                                                            lineHeight: '1.5',
+                                                            margin: 0,
+                                                            wordBreak: 'break-word',
+                                                            overflowWrap: 'anywhere',
+                                                            whiteSpace: 'pre-wrap',
+                                                        }}
+                                                    >
+                                                        {phaseText}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <p style={{ fontSize: '1.8rem', lineHeight: '1.5', margin: 0, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                                    {resp.response}
-                                </p>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </main>

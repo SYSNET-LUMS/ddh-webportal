@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import '../App.css';
 
-export default function DashboardCard({ title, icon, colorClass, to }) {
+export default function DashboardCard({ title, icon, colorClass, to, onClick }) {
     const navigate = useNavigate();
     const [isExpanding, setIsExpanding] = useState(false);
     const [overlayStyle, setOverlayStyle] = useState({});
     const cardRef = useRef(null);
 
-    const handleCardClick = () => {
+    const handleCardClick = (e) => {
+        if (onClick) {
+            onClick(e);
+            return;
+        }
         if (!to || isExpanding) return;
 
         const rect = cardRef.current.getBoundingClientRect();

@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/ClassActivity.css';
 
-import liveClassIcon   from '../assets/class-activity/live-class-icon.svg';
-import discussionIcon  from '../assets/class-activity/discussion-icon.svg';
+import liveClassIcon from '../assets/class-activity/live-class-icon.svg';
+import discussionIcon from '../assets/class-activity/discussion-icon.svg';
 import interactiveIcon from '../assets/class-activity/interactive-icon.svg';
 
 /* ─── Activity type → icon & color ────────────────────────────── */
 
 const TYPE_MAP = {
-    'discussion':    { icon: discussionIcon,  color: 'gold' },
-    'interactive':   { icon: interactiveIcon, color: 'gold' },
+    'discussion': { icon: discussionIcon, color: 'gold' },
+    'interactive': { icon: interactiveIcon, color: 'gold' },
 };
 
 /** Fallback for unknown types */
@@ -22,7 +22,7 @@ function resolveType(type = '') {
 /* ─── API ──────────────────────────────────────────────────────── */
 
 const BACKEND = import.meta.env.VITE_SERVER_HTTP_ADDRESS
-    ? `http://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
+    ? `https://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
     : '';
 
 async function fetchClassList() {
@@ -85,20 +85,22 @@ function transformApiData(data) {
         activities: (session.activities ?? []).map((act, idx) => {
             const { icon, color } = resolveType(act.type);
             return {
-                id:          act.id ?? `${session.date}-${idx}`,
-                label:       act.name,
+                id: act.id ?? `${session.date}-${idx}`,
+                label: act.name,
                 icon,
                 color,
                 // contentUrls is an ordered array of URLs, one per phase
-                contentUrls:  Array.isArray(act.contentUrls)
-                                  ? act.contentUrls
-                                  : (act.contentUrl ?? act.redirectUrl)
-                                      ? [act.contentUrl ?? act.redirectUrl]
-                                      : [],
+                contentUrls: Array.isArray(act.contentUrls)
+                    ? act.contentUrls
+                    : (act.contentUrl ?? act.redirectUrl)
+                        ? [act.contentUrl ?? act.redirectUrl]
+                        : [],
                 totalPhases: act.totalPhases ?? act.contentUrls?.length ?? 1,
                 isGroupActivity: act.isGroupActivity ?? act.isGroup ?? false,
                 sessionDate: session.date.toLowerCase().replace(/\s+/g, '-'),
                 activityStatus: act.status ?? 'live',
+                phaseName: act.phaseName,
+                phaseNames: act.phaseNames,
             };
         }),
     }));
@@ -109,7 +111,7 @@ function transformApiData(data) {
 function ChevronIcon() {
     return (
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
-             stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="2,4 6,8 10,4" />
         </svg>
     );
@@ -118,8 +120,8 @@ function ChevronIcon() {
 function LockIcon() {
     return (
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-             stroke="rgba(255,255,255,0.55)" strokeWidth="1.8"
-             strokeLinecap="round" strokeLinejoin="round">
+            stroke="rgba(255,255,255,0.55)" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
@@ -130,8 +132,8 @@ function LockIcon() {
 
 function DateSection({ session, navigate }) {
     const { date, activities, status } = session;
-    const isPast   = status === 'past';
-    const isNext   = status === 'next';
+    const isPast = status === 'past';
+    const isNext = status === 'next';
     const isFuture = status === 'future';
 
     const [open, setOpen] = useState(isNext);
@@ -141,17 +143,19 @@ function DateSection({ session, navigate }) {
             alert('This activity is not open yet.');
             return;
         }
-        
+
         if (act.contentUrls?.length) {
             navigate('/activity', {
                 state: {
-                    activityId:      act.id,
-                    activityLabel:   act.label,
-                    contentUrls:     act.contentUrls,
-                    totalPhases:     act.totalPhases,
+                    activityId: act.id,
+                    activityLabel: act.label,
+                    contentUrls: act.contentUrls,
+                    totalPhases: act.totalPhases,
                     isGroupActivity: act.isGroupActivity,
-                    sessionDate:     act.sessionDate,
-                    activityStatus:  act.activityStatus,
+                    sessionDate: act.sessionDate,
+                    activityStatus: act.activityStatus,
+                    phaseName: act.phaseName,
+                    phaseNames: act.phaseNames,
                 },
             });
         }
@@ -192,8 +196,8 @@ function DateSection({ session, navigate }) {
             {open && (
                 <div className={`ca-activity-grid ${isPast ? 'ca-activity-grid--past' : ''}`}>
                     {isNext && (
-                        <div 
-                            className="ca-card teal ca-card--clickable" 
+                        <div
+                            className="ca-card teal ca-card--clickable"
                             style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                             onClick={() => navigate('/live-activity')}
                         >
@@ -230,9 +234,9 @@ function DateSection({ session, navigate }) {
 export default function ClassActivity() {
     const navigate = useNavigate();
 
-    const [sessions, setSessions]   = useState([]);
-    const [loading,  setLoading]    = useState(true);
-    const [error,    setError]      = useState(null);
+    const [sessions, setSessions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         let cancelled = false;
