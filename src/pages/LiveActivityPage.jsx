@@ -64,6 +64,7 @@ export default function LiveActivityPage() {
                                 isLiveMode: true,
                                 phaseName: activeActivity.phaseName,
                                 phaseNames: activeActivity.phaseNames,
+                                StartingText: activeActivity.StartingText || activeActivity.startingText,
                             },
                         });
                         return; // Stop polling

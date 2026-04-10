@@ -115,12 +115,60 @@ function CompletionScreen({ activityLabel, navigate }) {
     );
 }
 
+/* ─── Group Entry Modal ───────────────────────────────────────── */
+
+function GroupModal({ isOpen, onSubmit }) {
+    const [val, setVal] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSub = async (e) => {
+        e.preventDefault();
+        const trimmed = val.trim();
+        if (!trimmed) return;
+        setLoading(true);
+        try {
+            await onSubmit(trimmed);
+        } catch (err) {
+            console.error(err);
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="ap-modal-overlay">
+            <div className="ap-modal-content">
+                <h2 className="ap-modal-title">Enter Group Number</h2>
+                <p className="ap-modal-text">
+                    This is a group activity. Please enter your group number to continue. If you dont know what your group number is, please call on teaching staff.
+                </p>
+                <form onSubmit={handleSub}>
+                    <input
+                        type="number"
+                        className="ap-modal-input"
+                        placeholder="e.g. 5"
+                        value={val}
+                        onChange={e => setVal(e.target.value)}
+                        autoFocus
+                        required
+                        min="1"
+                    />
+                    <button type="submit" className="ap-modal-btn" disabled={loading || !val.trim()}>
+                        {loading ? <span className="ap-spinner" /> : 'Join Group'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+}
+
 /* ─── Page ────────────────────────────────────────────────────── */
 
 export default function ActivityPage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useUser();
+    const { user, isLoaded } = useUser();
     const userId = user?.username;
     const groupNumber = user?.publicMetadata?.groupNumber || 'NO-GROUP';
 
@@ -135,7 +183,36 @@ export default function ActivityPage() {
         isLiveMode = false,
         phaseName = 'Phase',     // Custom prefix (e.g., "Question", "Step")
         phaseNames = [],         // Custom labels for each phase (e.g., ["Intro", "Core", "Conclusion"])
+        StartingText = '',       // Initial text for the response box
     } = location.state ?? {};
+
+    const [showGroupModal, setShowGroupModal] = useState(false);
+
+    useEffect(() => {
+        if (isLoaded && isGroupActivity && (!user?.publicMetadata?.groupNumber)) {
+            setShowGroupModal(true);
+        }
+    }, [isLoaded, isGroupActivity, user]);
+
+    const handleGroupSubmit = async (num) => {
+        const numericGroup = parseInt(num, 10);
+        if (isNaN(numericGroup)) {
+            alert("Please enter a valid number");
+            throw new Error("Invalid number");
+        }
+        try {
+            const res = await fetch(`${BACKEND}/api/user/group`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, groupNumber: numericGroup }),
+            });
+            if (!res.ok) throw new Error("Failed to update group");
+            window.location.reload();
+        } catch (err) {
+            alert("Error: " + err.message);
+            throw err;
+        }
+    };
 
     // Normalise: ensure contentUrls has exactly totalPhases entries (pad with null if needed)
     const urls = Array.from({ length: totalPhases }, (_, i) => contentUrls[i] ?? null);
@@ -174,6 +251,37 @@ export default function ActivityPage() {
 
         fetchResponse();
     }, [activityStatus, currentPhase, activityId, userId, groupNumber, isGroupActivity, sessionDate]);
+    
+    // Response Persistence & StartingText Loading
+    useEffect(() => {
+        if (activityStatus === 'completed') return;
+
+        const storageKey = `response-${activityId}-${currentPhase}-${userId || 'anon'}`;
+        const saved = sessionStorage.getItem(storageKey);
+        
+        if (saved) {
+            setResponse(saved);
+        } else if (StartingText) {
+            const textToSet = Array.isArray(StartingText)
+                ? (StartingText[currentPhase - 1] || '')
+                : StartingText;
+            setResponse(textToSet || '');
+        } else {
+            setResponse('');
+        }
+    }, [currentPhase, StartingText, activityStatus, activityId, userId]);
+
+    // Save response to sessionStorage whenever it changes
+    useEffect(() => {
+        if (activityStatus === 'completed' || !activityId) return;
+        const storageKey = `response-${activityId}-${currentPhase}-${userId || 'anon'}`;
+        
+        if (response) {
+            sessionStorage.setItem(storageKey, response);
+        } else {
+            sessionStorage.removeItem(storageKey);
+        }
+    }, [response, currentPhase, activityId, userId, activityStatus]);
 
     // Polling effect for Group and Individual Activities
     useEffect(() => {
@@ -272,7 +380,10 @@ export default function ActivityPage() {
             setCompletedPhases(newCompleted);
             setStatus('success');
             setStatusMsg(isLastPhase ? 'All done!' : 'Response saved! Moving to next phase…');
+            
+            // Clear persisted response on success
             setResponse('');
+            sessionStorage.removeItem(`response-${activityId}-${currentPhase}-${userId || 'anon'}`);
 
             if (isLastPhase) {
                 // Short delay so user sees the success flash before completion screen
@@ -490,6 +601,8 @@ export default function ActivityPage() {
                     </form>
                 </div>
             </div>
+
+            <GroupModal isOpen={showGroupModal} onSubmit={handleGroupSubmit} />
         </div>
     );
 }

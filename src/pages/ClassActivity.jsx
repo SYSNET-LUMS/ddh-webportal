@@ -101,6 +101,7 @@ function transformApiData(data) {
                 activityStatus: act.status ?? 'live',
                 phaseName: act.phaseName,
                 phaseNames: act.phaseNames,
+                StartingText: act.StartingText || act.startingText,
             };
         }),
     }));
@@ -156,6 +157,7 @@ function DateSection({ session, navigate }) {
                     activityStatus: act.activityStatus,
                     phaseName: act.phaseName,
                     phaseNames: act.phaseNames,
+                    StartingText: act.StartingText,
                 },
             });
         }

@@ -17,6 +17,7 @@ export default function BigScreenPage() {
     const [sessionDate, setSessionDate] = useState('');
     const [userGroups, setUserGroups] = useState({});
     const [responses, setResponses] = useState([]);
+    const [pushedBackIds, setPushedBackIds] = useState([]);
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -130,6 +131,24 @@ export default function BigScreenPage() {
         };
     }, [liveActivity, sessionDate]);
 
+    const sortedResponses = React.useMemo(() => {
+        if (!liveActivity) return [];
+        const isGroup = liveActivity.isGroupActivity || liveActivity.isGroup;
+
+        return [...responses].sort((a, b) => {
+            const idA = isGroup ? a.groupNumber : a.userId;
+            const idB = isGroup ? b.groupNumber : b.userId;
+
+            const indexA = pushedBackIds.indexOf(idA);
+            const indexB = pushedBackIds.indexOf(idB);
+
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return 1;
+            if (indexB !== -1) return -1;
+            return 0;
+        });
+    }, [responses, pushedBackIds, liveActivity]);
+
     if (!liveActivity) {
         return (
             <div
@@ -210,6 +229,33 @@ export default function BigScreenPage() {
                         Live Submissions
                     </p>
                 </div>
+
+                {pushedBackIds.length > 0 && (
+                    <button
+                        onClick={() => setPushedBackIds([])}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            color: '#aaa',
+                            padding: '0.8rem 1.5rem',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            fontSize: '1.2rem',
+                            fontWeight: '600',
+                            transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                            e.target.style.color = '#fff';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                            e.target.style.color = '#aaa';
+                        }}
+                    >
+                        Reset Order
+                    </button>
+                )}
             </header>
 
             <main
@@ -232,7 +278,7 @@ export default function BigScreenPage() {
                         alignItems: 'start',
                     }}
                 >
-                    {responses.length === 0 ? (
+                    {sortedResponses.length === 0 ? (
                         <h2
                             style={{
                                 color: '#555',
@@ -245,8 +291,9 @@ export default function BigScreenPage() {
                             Waiting for responses...
                         </h2>
                     ) : (
-                        responses.map((resp, idx) => {
+                        sortedResponses.map((resp, idx) => {
                             const isGroup = liveActivity.isGroupActivity || liveActivity.isGroup;
+                            const identifier = isGroup ? resp.groupNumber : resp.userId;
                             const label = isGroup
                                 ? `Group ${resp.groupNumber !== 'NO-GROUP'
                                     ? resp.groupNumber
@@ -273,8 +320,40 @@ export default function BigScreenPage() {
                                         minWidth: 0,
                                         width: '100%',
                                         boxSizing: 'border-box',
+                                        position: 'relative',
                                     }}
                                 >
+                                    <button
+                                        onClick={() => {
+                                            setPushedBackIds(prev => [...prev.filter(id => id !== identifier), identifier]);
+                                        }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '1.5rem',
+                                            right: '1.5rem',
+                                            padding: '0.5rem 1rem',
+                                            background: 'rgba(255,255,255,0.03)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            color: '#666',
+                                            borderRadius: '8px',
+                                            cursor: 'pointer',
+                                            fontSize: '0.9rem',
+                                            transition: 'all 0.2s ease',
+                                            fontWeight: '500',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.target.style.background = 'rgba(255,255,255,0.08)';
+                                            e.target.style.color = '#aaa';
+                                            e.target.style.borderColor = 'rgba(255,255,255,0.2)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.target.style.background = 'rgba(255,255,255,0.03)';
+                                            e.target.style.color = '#666';
+                                            e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                        }}
+                                    >
+                                        Send to Back
+                                    </button>
                                     <div
                                         style={{
                                             display: 'flex',
