@@ -1,141 +1,79 @@
-import { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BlocklyWorkspace } from 'react-blockly';
-import * as Blockly from 'blockly/core';
-import { javascriptGenerator } from 'blockly/javascript'; // Import the generator
-import { initHealthBlocks } from '../utils/healthBlocks';
-import 'blockly/blocks'; // Standard blocks
-import 'blockly/javascript'; // JS Generator
-import '../App.css';
-import '../styles/HomeAssignments.css';
+import '../styles/ClassActivity.css';
+import '../styles/AssignmentList.css';
+import homeIcon from "../assets/dashboard/home-icon.svg";
+
+function ChevronIcon() {
+    return (
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="2,4 6,8 10,4" />
+        </svg>
+    );
+}
+
+const MOCK_ASSIGNMENTS = [
+    { id: 0, label: "Assignment 0", icon: homeIcon, color: 'gold-assignment' },
+    { id: 1, label: "Assignment 1", icon: homeIcon, color: 'gold-assignment' },
+    { id: 2, label: "Assignment 2", icon: homeIcon, color: 'gold-assignment' },
+];
 
 export default function HomeAssignments() {
     const navigate = useNavigate();
-    const [xml, setXml] = useState(''); // Stores the current state of blocks
-    const [javascriptCode, setJavascriptCode] = useState('');
 
-    // Initialize custom blocks
-    initHealthBlocks();
-
-    // Define the categories and blocks for the student toolbox
-    const initialToolbox = {
-        kind: 'categoryToolbox',
-        contents: [
-            {
-                kind: 'category',
-                name: 'Logic',
-                colour: '#5C81A6',
-                contents: [{ kind: 'block', type: 'controls_if' }],
-            },
-            {
-                kind: 'category',
-                name: 'Loops',
-                colour: '#5CA65C',
-                contents: [{ kind: 'block', type: 'controls_whileUntil' }],
-            },
-            {
-                kind: 'category',
-                name: 'Text',
-                colour: '#5CA68E',
-                contents: [{ kind: 'block', type: 'text' }, { kind: 'block', type: 'text_print' }],
-            },
-            { kind: 'category', name: 'Variables', custom: 'VARIABLE', colour: '#A55B80' },
-            { kind: 'category', name: 'Functions', custom: 'PROCEDURE', colour: '#995BA5' },
-            {
-                kind: 'category',
-                name: 'IoT Health',
-                colour: '#e53935',
-                contents: [
-                    { kind: 'block', type: 'get_sensor' },
-                    { kind: 'block', type: 'get_activity' },
-                    { kind: 'block', type: 'send_whatsapp' },
-                    { kind: 'block', type: 'ask_ai' }
-                ]
-            }
-        ],
+    const handleAssignmentClick = (id) => {
+        if (id === 0) {
+            navigate('/assignments/0');
+        } else {
+            alert("This assignment hasn't been released yet.");
+        }
     };
-
-    const onWorkspaceChange = (workspace) => {
-        // Generate JavaScript code from the blocks in the workspace
-        const code = javascriptGenerator.workspaceToCode(workspace);
-        setJavascriptCode(code);
-    };
-
-    // // 1. Fetch the list of saved items
-    // useEffect(() => {
-    //     if (user) {
-    //         fetch(`/api/snippets/${user.id}`)
-    //             .then(res => res.json())
-    //             .then(data => setSavedSnippets(data.snippets || []));
-    //     }
-    // }, [user]);
-
-    // // 2. Save current blocks as a new named snippet
-    // const saveSnippet = async () => {
-    //     if (!snippetName) return alert("Enter a name for this function");
-
-    //     // Save only the blocks currently in the workspace
-    //     const state = Blockly.serialization.workspaces.save(workspaceRef.current);
-
-    //     await fetch('/api/snippets/save', {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({
-    //             clerkId: user.id,
-    //             name: snippetName,
-    //             blockData: state
-    //         })
-    //     });
-    //     // Refresh list
-    //     setSnippetName("");
-    // };
-
-    // // 3. The "Magic" Function: Add to existing workspace without wiping
-    // const injectSnippet = (blockData) => {
-    //     if (workspaceRef.current) {
-    //         // .load() on a workspace level usually wipes it. 
-    //         // To APPEND, we iterate through the saved blocks.
-    //         Blockly.serialization.workspaces.load(blockData, workspaceRef.current, { recordUndo: true });
-    //         // Note: Blockly automatically handles ID collisions to prevent interference.
-    //     }
-    // };
 
     return (
-        <div className="assignment-container">
-            <button className="back-btn" onClick={() => navigate('/dashboard')}>
-                ← Back to Dashboard
-            </button>
+        <div className="class-activity-container home-assignments-page">
+            {/* Header */}
+            <div className="ca-header">
+                <button
+                    className="ca-back-btn"
+                    onClick={() => navigate('/dashboard')}
+                    id="ca-back-button"
+                >
+                    ← Back
+                </button>
+                <h1 className="ca-page-title">Home Assignments</h1>
+            </div>
 
-            <div className="assignment-workspace">
-                {/* Main Blockly Panel */}
-                <div className="panel blockly-panel" style={{ position: 'relative' }}>
-                    <BlocklyWorkspace
-                        className="blockly-editor-fill" // Use CSS to make it fill the panel
-                        toolboxConfiguration={initialToolbox}
-                        initialXml={xml}
-                        onXmlChange={setXml}
-                        onWorkspaceChange={onWorkspaceChange}
-                        workspaceConfiguration={{
-                            grid: { spacing: 20, length: 30, colour: '#ccc', snap: true },
-                        }}
-                    />
-                </div>
-
-                <div className="side-column">
-                    <div className="panel output-panel">
-                        <div className="panel-label">Output</div>
-                        {/* Display the generated code here */}
-                        <pre className="code-display">
-                            {javascriptCode || "// Drag blocks to see code output"}
-                        </pre>
+            {/* Body */}
+            <div className="ca-body">
+                <div className="ca-date-section">
+                    <div className="ca-date-toggle" style={{ cursor: 'default' }}>
+                         <span className="ca-toggle-icon open">
+                            <ChevronIcon />
+                        </span>
+                        <span className="ca-date-label">Available Assignments</span>
                     </div>
-                    <div className="panel saved-panel">
-                        <div className="panel-label">Saved Files/Function</div>
-                        {/* <button onClick={saveProject}>Save</button>
-                        <button onClick={loadProject}>Load</button> */}
+
+                    <div className="ca-activity-grid">
+                        {MOCK_ASSIGNMENTS.map((act) => (
+                            <div
+                                key={act.id}
+                                className={`ca-card ${act.color} ca-card--clickable`}
+                                role="button"
+                                tabIndex={0}
+                                id={`card-${act.id}`}
+                                onClick={() => handleAssignmentClick(act.id)}
+                                onKeyDown={e => e.key === 'Enter' && handleAssignmentClick(act.id)}
+                            >
+                                <img src={act.icon} alt={act.label} className="ca-card-icon" />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span className="ca-card-label">{act.label}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }

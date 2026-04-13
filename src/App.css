@@ -138,6 +138,7 @@
 
 /* src/App.css */
 
+
 .dashboard-wrapper {
   min-height: 100vh;
   width: 100vw;
@@ -237,11 +238,22 @@
 
 .card-content {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-icon {
   width: 80px;
-  margin-bottom: 1rem;
+  display: block;
+  margin: 0 auto 1rem auto;
+}
+
+.card-content h3 {
+  margin: 0;
+  text-align: center;
+  width: 100%;
 }
 
 /* Dashboard mobile improvements */

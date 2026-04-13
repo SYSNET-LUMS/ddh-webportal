@@ -43,7 +43,7 @@ export default function Dashboard() {
 
             <div className={`dashboard-grid-3 ${isMobile ? "mobile-stack" : ""}`}>
                 <DashboardCard
-                    title={isMobile ? "Class Assignment" : "Class-Room Assignment"}
+                    title={isMobile ? "Class Activities" : "Class-Room Activities"}
                     colorClass="navy-card"
                     icon={classroomIcon}
                     to="/class-activity"
@@ -54,15 +54,16 @@ export default function Dashboard() {
                     colorClass="gold-card"
                     icon={homeIcon}
                     to="/home-assignments"
-                    onClick={() =>
-                        alert("This will be released to participants soon and you will be notified when it is live")
-                    }
+                // onClick={() =>
+                //     alert("This will be released to participants soon and you will be notified when it is live")
+                // }
                 />
 
                 <DashboardCard
                     title="I Need Help"
                     colorClass="green-card"
                     icon={helpIcon}
+                    to="/help"
                 />
             </div>
         </div>

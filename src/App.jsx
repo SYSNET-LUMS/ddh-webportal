@@ -3,15 +3,20 @@ import { Show } from "@clerk/react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import HomeAssignments from "./pages/HomeAssignments";
+import HomeAssignmentEditor from "./pages/HomeAssignmentEditor";
 import ClassActivity from "./pages/ClassActivity";
 import ActivityPage from "./pages/ActivityPage";
 import LiveActivityPage from "./pages/LiveActivityPage";
 import BigScreenPage from "./pages/BigScreenPage";
 import AdminPage from "./pages/AdminPage";
+import Help from "./pages/Help";
+import Assignment0 from "./pages/assignments/Assignment0";
+import Sidebar from "./components/Sidebar";
 
 function App() {
   return (
     <BrowserRouter basename="/ddh-portal/">
+      <Sidebar />
       <Routes>
         {/* Unprotected BigScreen Projector Route */}
         <Route path="/big-screen" element={<BigScreenPage />} />
@@ -34,9 +39,24 @@ function App() {
             <Dashboard />
           </Show>
         } />
+        <Route path="/help" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <Help />
+          </Show>
+        } />
         <Route path="/home-assignments" element={
           <Show when='signed-in' fallback={<Navigate to="/" replace />}>
             <HomeAssignments />
+          </Show>
+        } />
+        <Route path="/assignments/0" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <Assignment0 />
+          </Show>
+        } />
+        <Route path="/home-assignments/editor/:id" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <HomeAssignmentEditor />
           </Show>
         } />
         <Route path="/class-activity" element={
