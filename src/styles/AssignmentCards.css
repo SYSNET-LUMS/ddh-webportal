@@ -805,3 +805,33 @@
 .card-action-btn:active {
     transform: translateY(1px);
 }
+
+.submission-notice {
+    background: #fff9e6;
+    border-left: 4px solid var(--color-text-gold, #a56c1f);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: #856404;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2ddd8;
+}
+
+.submission-notice span {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.submission-notice p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.submission-notice strong {
+    color: var(--dash-navy, #0a1d37);
+    font-weight: 700;
+}

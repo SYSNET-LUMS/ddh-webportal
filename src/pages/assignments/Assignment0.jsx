@@ -599,11 +599,31 @@ function AssignmentPart({ part, partIndex, checked, onToggle, username, sensorLi
 
 export default function Assignment0() {
     const navigate = useNavigate();
-    const { user } = useUser();
+    const { user, isLoaded } = useUser();
     const [checked, setChecked] = useState({});
     const [sensorList, setSensorList] = useState([]);
     const [submitStatus, setSubmitStatus] = useState('idle'); // idle | loading | success | error
     const [submitMsg, setSubmitMsg] = useState('');
+    const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (!isLoaded || !user) return;
+            const safeUsername = (user.username ?? user.firstName ?? 'student').replace(/[^a-zA-Z0-9._-]/g, '.');
+            const fileName = `${safeUsername}_A0_SensorList.txt`;
+            const key = `home-assignments/assignment-0/${safeUsername}/${fileName}`;
+            try {
+                // Check if the sensor list file exists in MinIO
+                const res = await fetch(`${BACKEND}/api/minio/file?bucket=class-data&key=${key}`);
+                if (res.ok) {
+                    setHasExistingSubmission(true);
+                }
+            } catch (err) {
+                console.error('Failed to check submission status:', err);
+            }
+        };
+        checkStatus();
+    }, [user, isLoaded]);
 
     const username = user?.username ?? user?.firstName ?? 'student';
     const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
@@ -652,6 +672,7 @@ export default function Assignment0() {
             const key = `home-assignments/assignment-0/${safeUsername}/${fileName}`;
 
             await uploadToMinio(file, key);
+            setHasExistingSubmission(true);
             setSubmitStatus('success');
             setSubmitMsg('Assignment submitted successfully!');
         } catch (err) {
@@ -680,6 +701,12 @@ export default function Assignment0() {
             </header>
 
             <main className="assignment-page-body">
+                {hasExistingSubmission && (
+                    <div className="submission-notice">
+                        <span>💡</span>
+                        <p><strong>Assignment Already Submitted:</strong> You have previously submitted this assignment. Any new submission will <strong>overwrite</strong> your previous data.</p>
+                    </div>
+                )}
                 <AssignmentIntro />
                 {modifiedParts.map((part, pIdx) => (
                     <AssignmentPart
