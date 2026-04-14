@@ -11,6 +11,7 @@ import BigScreenPage from "./pages/BigScreenPage";
 import AdminPage from "./pages/AdminPage";
 import Help from "./pages/Help";
 import Assignment0 from "./pages/assignments/Assignment0";
+import LiveSensorStream from "./pages/assignments/LiveSensorStream";
 import Sidebar from "./components/Sidebar";
 
 function App() {
@@ -52,6 +53,11 @@ function App() {
         <Route path="/assignments/0" element={
           <Show when='signed-in' fallback={<Navigate to="/" replace />}>
             <Assignment0 />
+          </Show>
+        } />
+        <Route path="/assignments/0/live-sensor-stream" element={
+          <Show when='signed-in' fallback={<Navigate to="/" replace />}>
+            <LiveSensorStream />
           </Show>
         } />
         <Route path="/home-assignments/editor/:id" element={

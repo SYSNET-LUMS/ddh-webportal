@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '@clerk/react';
 import '../../styles/AssignmentCards.css';
@@ -34,11 +34,11 @@ function buildFileName(username, partIndex, cardIndex, originalFile) {
     return `${safeName}_A0_P${partIndex}_C${cardIndex}.${ext}`;
 }
 
-async function uploadToMinio(file, renamedFileName) {
+async function uploadToMinio(file, key) {
     const formData = new FormData();
-    formData.append('file', file, renamedFileName);
-    formData.append('bucket', 'assignment-submissions');
-    formData.append('key', renamedFileName);
+    formData.append('file', file);
+    formData.append('bucket', 'class-data');
+    formData.append('key', key);
 
     const res = await fetch(`${BACKEND}/api/minio/upload`, {
         method: 'POST',
@@ -161,14 +161,14 @@ const PARTS = [
             {
                 id: '4-2',
                 title: 'Open the DDH portal',
-                body: 'Open the **DDH portal** in your browser.\n\nNavigate to the **XYZ page** and enter your name as instructed.',
-                hint: 'Make sure you are using the correct page provided by your instructor.',
+                body: 'Open the **DDH portal** in your browser.\n\nNavigate to the **Live Sensor Stream** page to observe your data in real-time. Once you navigate to the stream page, you should see data if you have an active recording.',
+                // hint: '',
             },
             {
                 id: '4-3',
                 title: 'Observe incoming data',
                 body: 'Watch the data appear in the portal.\n\nYou will notice a delay of about **5 seconds**. This is because data is processed in small time windows, not streamed instantly.',
-                hint: 'This delay is expected and part of how the system works.',
+                // hint: 'This delay is expected and part of how the system works.',
             },
         ],
     },
@@ -381,11 +381,16 @@ function UploadZone({ partIndex, cardIndex, username }) {
     const handleFile = async (file) => {
         if (!file) return;
         const renamedFile = buildFileName(username, partIndex, cardIndex, file);
+
+        // Use the provided path format: class-data/home-assignments/assignment-0/[student-username]/[item]
+        const safeUsername = (username ?? 'student').replace(/[^a-zA-Z0-9._-]/g, '.');
+        const key = `home-assignments/assignment-0/${safeUsername}/${renamedFile}`;
+
         setStatus('uploading');
         setStatusMsg('Uploading…');
         setUploadedName(renamedFile);
         try {
-            await uploadToMinio(file, renamedFile);
+            await uploadToMinio(file, key);
             setStatus('done');
             setStatusMsg('Upload successful!');
         } catch (err) {
@@ -509,6 +514,15 @@ function AssignmentCard({ card, partIndex, cardIndex, checked, onToggle, usernam
                         username={username}
                     />
                 )}
+
+                {card.action && (
+                    <button
+                        className="card-action-btn"
+                        onClick={card.action.onClick}
+                    >
+                        {card.action.label}
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -594,6 +608,24 @@ export default function Assignment0() {
     const username = user?.username ?? user?.firstName ?? 'student';
     const toggle = (id) => setChecked(prev => ({ ...prev, [id]: !prev[id] }));
 
+    const modifiedParts = useMemo(() => {
+        return PARTS.map(part => ({
+            ...part,
+            cards: part.cards.map(card => {
+                if (card.id === '4-2') {
+                    return {
+                        ...card,
+                        action: {
+                            label: 'Go to Live Sensor Stream',
+                            onClick: () => window.open('/ddh-portal/assignments/0/live-sensor-stream', '_blank')
+                        }
+                    };
+                }
+                return card;
+            })
+        }));
+    }, [navigate]);
+
     const total = totalCards(PARTS);
     const done = Object.values(checked).filter(Boolean).length;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -615,10 +647,11 @@ export default function Assignment0() {
             const file = new File([blob], 'sensors.txt');
 
             // Naming convention for this specific list
-            const safeName = username.replace(/[^a-zA-Z0-9._-]/g, '.');
-            const fileName = `${safeName}_A0_SensorList.txt`;
+            const safeUsername = username.replace(/[^a-zA-Z0-9._-]/g, '.');
+            const fileName = `${safeUsername}_A0_SensorList.txt`;
+            const key = `home-assignments/assignment-0/${safeUsername}/${fileName}`;
 
-            await uploadToMinio(file, fileName);
+            await uploadToMinio(file, key);
             setSubmitStatus('success');
             setSubmitMsg('Assignment submitted successfully!');
         } catch (err) {
@@ -648,7 +681,7 @@ export default function Assignment0() {
 
             <main className="assignment-page-body">
                 <AssignmentIntro />
-                {PARTS.map((part, pIdx) => (
+                {modifiedParts.map((part, pIdx) => (
                     <AssignmentPart
                         key={pIdx}
                         part={part}
@@ -662,7 +695,7 @@ export default function Assignment0() {
                 ))}
 
                 <div className="assignment-submit-section">
-                    <button 
+                    <button
                         className={`assignment-submit-btn ${submitStatus}`}
                         onClick={handleSubmit}
                         disabled={submitStatus === 'loading'}

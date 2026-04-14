@@ -778,3 +778,30 @@
         display: none;
     }
 }
+
+.card-action-btn {
+    background: var(--color-text-gold, #a56c1f);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px rgba(165, 108, 31, 0.2);
+}
+
+.card-action-btn:hover {
+    background: #8e5a1a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(165, 108, 31, 0.3);
+}
+
+.card-action-btn:active {
+    transform: translateY(1px);
+}
