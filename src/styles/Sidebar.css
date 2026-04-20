@@ -90,6 +90,11 @@
     color: black;
 }
 
+.logout-btn:hover {
+    background: rgba(255, 71, 71, 0.2) !important;
+    color: #ff4747 !important;
+}
+
 .side-btn img {
     width: 30px;
     height: 30px;
