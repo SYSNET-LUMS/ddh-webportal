@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { InfluxDB } from '@influxdata/influxdb-client';
+import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,6 +13,10 @@ import {
 } from 'recharts';
 import '../../styles/AssignmentCards.css';
 
+const BACKEND = import.meta.env.VITE_SERVER_HTTP_ADDRESS
+  ? `https://${import.meta.env.VITE_SERVER_HTTP_ADDRESS}`
+  : '';
+
 const LiveSensorStream = () => {
   const { user } = useUser();
   const navigate = useNavigate();
@@ -21,80 +24,41 @@ const LiveSensorStream = () => {
   const [error, setError] = useState(null);
 
   // Get user email for filtering
-  const email = user?.primaryEmailAddress?.emailAddress;
+  const email = user?.emailAddresses?.[0]?.emailAddress;
 
-  const influxConfig = useMemo(() => {
-    // Priority: Vite env -> User snippet recommendation -> Fallback from provided .env snippet
-    return {
-      url: 'http://influxdb:8086',
-      token: import.meta.env.VITE_INFLUXDB_TOKEN || 'ky5RhvKs4zs4X7rLGPVn6WcIf9vKC4-1YY2bx-QRFcq5TkDypOysYELnYdUJaj9DyrJoLavobbC_vgwn1r4aBA==',
-      org: 'primary', // Assumed default org
-      bucket: 'sensor-data'
-    };
-  }, []);
 
+  console.log(user);
   useEffect(() => {
     if (!email) return;
 
-    let client;
-    try {
-      client = new InfluxDB({ url: influxConfig.url, token: influxConfig.token });
-    } catch (e) {
-      setError("Failed to initialize InfluxDB client: " + e.message);
-      return;
-    }
-
-    const queryApi = client.getQueryApi(influxConfig.org);
-
-    // Flux query for last 30s, filtered by measurement, fields x,y,z and user email
-    const fluxQuery = `
-      from(bucket: "${influxConfig.bucket}")
-        |> range(start: -30s)
-        |> filter(fn: (r) => r["_measurement"] == "accelerometer" or r["_measurement"] == "gyroscope")
-        |> filter(fn: (r) => r["_field"] == "x" or r["_field"] == "y" or r["_field"] == "z")
-        |> filter(fn: (r) => r["email"] == "${email}")
-    `;
-
-    const fetchData = () => {
-      const results = {};
-
-      queryApi.queryRows(fluxQuery, {
-        next(row, tableMeta) {
-          const o = tableMeta.toObject(row);
-          const time = new Date(o._time).getTime();
-          if (!results[time]) {
-            results[time] = {
-              time,
-              timestamp: new Date(o._time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-            };
-          }
-          const prefix = o._measurement === 'accelerometer' ? 'acc' : 'gyro';
-          results[time][`${prefix}_${o._field}`] = o._value;
-        },
-        error(err) {
-          console.error('InfluxDB Query Error:', err);
-          setError(`Connection Error: ${err.message}.`);
-        },
-        complete() {
-          const formattedData = Object.values(results).sort((a, b) => a.time - b.time);
-          setData(formattedData);
-          if (formattedData.length === 0) {
-            setError("No data found for the last 30 seconds for user: " + email);
-          } else {
-            setError(null);
-          }
-        },
-      });
+    const fetchData = async () => {
+      try {
+        console.log(`Fetching: ${BACKEND}/api/live-sensor-stream?email=${encodeURIComponent(email)}`);
+        const response = await fetch(`${BACKEND}/api/live-sensor-stream?email=${encodeURIComponent(email)}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const formattedData = await response.json();
+        setData(formattedData);
+        if (formattedData.length === 0) {
+          setError("No data found for the last 30 seconds for user: " + email);
+        } else {
+          setError(null);
+        }
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        setError(`Connection Error: ${err.message}.`);
+      }
     };
 
     // Initial fetch
     fetchData();
 
     // Poll every 1.5 seconds for live updates
-    const interval = setInterval(fetchData, 1500);
+    const interval = setInterval(fetchData, 5000);
 
     return () => clearInterval(interval);
-  }, [email, influxConfig]);
+  }, [email]);
 
   return (
     <div className="assignment-page" style={{ height: '100vh', width: '100vw', maxWidth: 'none', margin: 0, padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -139,16 +103,23 @@ const LiveSensorStream = () => {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis dataKey="timestamp" stroke="#555" fontSize={10} tick={false} axisLine={false} />
+                <XAxis 
+                  dataKey="timestamp" 
+                  stroke="#555" 
+                  fontSize={10} 
+                  tick={true} 
+                  axisLine={false}
+                  tickFormatter={(iso) => new Date(iso).toLocaleTimeString([], { second: '2-digit', fractionalSecondDigits: 3 })}
+                />
                 <YAxis stroke="#888" fontSize={10} width={40} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '11px' }}
                   itemStyle={{ padding: '0' }}
                 />
                 <Legend verticalAlign="top" align="right" height={20} iconSize={8} wrapperStyle={{ fontSize: '11px', top: -10 }} />
-                <Line type="monotone" dataKey="acc_x" stroke="#ff4d4d" name="X" dot={false} isAnimationActive={false} strokeWidth={1.5} />
-                <Line type="monotone" dataKey="acc_y" stroke="#00e676" name="Y" dot={false} isAnimationActive={false} strokeWidth={1.5} />
-                <Line type="monotone" dataKey="acc_z" stroke="#2979ff" name="Z" dot={false} isAnimationActive={false} strokeWidth={1.5} />
+                <Line type="monotone" dataKey="acc_x" stroke="#ff4d4d" name="X" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
+                <Line type="monotone" dataKey="acc_y" stroke="#00e676" name="Y" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
+                <Line type="monotone" dataKey="acc_z" stroke="#2979ff" name="Z" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -163,16 +134,22 @@ const LiveSensorStream = () => {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis dataKey="timestamp" stroke="#555" fontSize={10} tickMargin={10} />
+                <XAxis 
+                  dataKey="timestamp" 
+                  stroke="#555" 
+                  fontSize={10} 
+                  tickMargin={10}
+                  tickFormatter={(iso) => new Date(iso).toLocaleTimeString([], { second: '2-digit', fractionalSecondDigits: 3 })}
+                />
                 <YAxis stroke="#888" fontSize={10} width={40} />
                 <Tooltip
                   contentStyle={{ backgroundColor: '#2a2a2a', border: '1px solid #444', borderRadius: '8px', color: '#fff', fontSize: '11px' }}
                   itemStyle={{ padding: '0' }}
                 />
                 <Legend verticalAlign="top" align="right" height={20} iconSize={8} wrapperStyle={{ fontSize: '11px', top: -10 }} />
-                <Line type="monotone" dataKey="gyro_x" stroke="#ff9800" name="X" dot={false} isAnimationActive={false} strokeWidth={1.5} />
-                <Line type="monotone" dataKey="gyro_y" stroke="#e91e63" name="Y" dot={false} isAnimationActive={false} strokeWidth={1.5} />
-                <Line type="monotone" dataKey="gyro_z" stroke="#00bcd4" name="Z" dot={false} isAnimationActive={false} strokeWidth={1.5} />
+                <Line type="monotone" dataKey="gyro_x" stroke="#ff9800" name="X" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
+                <Line type="monotone" dataKey="gyro_y" stroke="#e91e63" name="Y" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
+                <Line type="monotone" dataKey="gyro_z" stroke="#00bcd4" name="Z" dot={false} isAnimationActive={false} strokeWidth={1.5} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </div>
