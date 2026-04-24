@@ -446,7 +446,7 @@
     cursor: pointer;
     z-index: 2;
     transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     color: #333;
     padding: 0;
     line-height: 1;
@@ -455,11 +455,16 @@
 .carousel-nav:hover {
     background: white;
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.carousel-nav.prev { left: 12px; }
-.carousel-nav.next { right: 12px; }
+.carousel-nav.prev {
+    left: 12px;
+}
+
+.carousel-nav.next {
+    right: 12px;
+}
 
 .carousel-indicators {
     display: flex;
@@ -626,7 +631,8 @@
     background: white;
 }
 
-.btn-add, .btn-delete {
+.btn-add,
+.btn-delete {
     width: 100%;
     padding: 0.5rem 0;
     border-radius: 6px;
@@ -656,7 +662,8 @@
     color: #b71c1c;
 }
 
-.btn-add:active, .btn-delete:active {
+.btn-add:active,
+.btn-delete:active {
     transform: scale(0.96);
 }
 
@@ -724,8 +731,15 @@
 }
 
 @keyframes msgSlideUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .submit-status-msg.success {
@@ -834,4 +848,159 @@
 .submission-notice strong {
     color: var(--dash-navy, #0a1d37);
     font-weight: 700;
+}
+
+/* ─── Split View Layout ────────────────────────────────────────── */
+
+.split-view {
+    height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    /* Override .assignment-page centering */
+    margin: 0;
+}
+
+.assignment-split-content {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    /* Prevent parent scrolling */
+}
+
+.left-panel {
+    height: 100%;
+    overflow-y: auto;
+    border-right: 1px solid #e2ddd8;
+    background: #f0ede8;
+    position: relative;
+}
+
+.left-panel-content {
+    padding: 2rem 2rem 5rem;
+    width: 100%;
+}
+
+.resize-handle {
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.resize-handle:hover,
+.resize-handle:active {
+    background: rgba(165, 108, 31, 0.2);
+    /* var(--color-text-gold) with opacity */
+}
+
+.resize-handle-line {
+    width: 2px;
+    height: 40px;
+    background: #e2ddd8;
+    border-radius: 1px;
+}
+
+.resize-handle:hover .resize-handle-line {
+    background: var(--color-text-gold, #a56c1f);
+}
+
+.right-panel {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    background: #d8d2c9;
+}
+
+.blockly-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.blockly-editor-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.blockly-editor-fill {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.code-output-overlay {
+    height: 200px;
+    background: white;
+    border-top: 2px solid #e2ddd8;
+    padding: 1.5rem;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.code-output-overlay .panel-label {
+    position: absolute;
+    top: 0.5rem;
+    left: 1rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.05em;
+}
+
+.code-output-overlay .code-display {
+    margin-top: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--dash-navy, #0a1d37);
+    white-space: pre-wrap;
+}
+
+@media (max-width: 1024px) {
+    .assignment-split-content {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .left-panel,
+    .right-panel {
+        width: 100%;
+        min-width: unset;
+        height: auto;
+        overflow-y: visible;
+    }
+
+    .right-panel {
+        height: 600px;
+        /* Fixed height for mobile */
+    }
+}
+
+/* ─── Blockly Overrides ────────────────────────────────────────── */
+
+/* Match the toolbox background to the assignments background */
+.blocklyToolboxDiv {
+    background-color: #f0ede8 !important;
+}
+
+/* Make the category text black for better visibility */
+.blocklyTreeLabel {
+    color: #1a1a1a !important;
+    font-family: 'Inter', 'Segoe UI', sans-serif !important;
+    font-weight: 500 !important;
+}
+
+/* Optional: slight hover effect for the rows */
+.blocklyTreeRow:hover {
+    background-color: #e2ddd8 !important;
+}
+
+/* Selected row styling */
+.blocklyTreeRow.blocklyTreeSelected {
+    background-color: #d0ccc6 !important;
 }

@@ -13,7 +13,7 @@ function ChevronIcon() {
     );
 }
 
-const MOCK_ASSIGNMENTS = [
+const ASSIGNMENTS = [
     { id: 0, label: "Assignment 0", icon: homeIcon, color: 'gold-assignment' },
     { id: 1, label: "Assignment 1", icon: homeIcon, color: 'gold-assignment' },
     { id: 2, label: "Assignment 2", icon: homeIcon, color: 'gold-assignment' },
@@ -25,6 +25,8 @@ export default function HomeAssignments() {
     const handleAssignmentClick = (id) => {
         if (id === 0) {
             navigate('/assignments/0');
+        } else if (id === 1) {
+            navigate('/assignments/1');
         } else {
             alert("This assignment hasn't been released yet.");
         }
@@ -48,14 +50,14 @@ export default function HomeAssignments() {
             <div className="ca-body">
                 <div className="ca-date-section">
                     <div className="ca-date-toggle" style={{ cursor: 'default' }}>
-                         <span className="ca-toggle-icon open">
+                        <span className="ca-toggle-icon open">
                             <ChevronIcon />
                         </span>
                         <span className="ca-date-label">Available Assignments</span>
                     </div>
 
                     <div className="ca-activity-grid">
-                        {MOCK_ASSIGNMENTS.map((act) => (
+                        {ASSIGNMENTS.map((act) => (
                             <div
                                 key={act.id}
                                 className={`ca-card ${act.color} ca-card--clickable`}
